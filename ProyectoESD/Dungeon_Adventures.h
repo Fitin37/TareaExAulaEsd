@@ -1,9 +1,11 @@
-#ifndef DUNGEON_H
-#define DUNGEON_H
+#ifndef DUNGEON_ADVENTURES_H
+#define DUNGEON_ADVENTURES_H
 
+#define _CRT_SECURE_NO_WARNINGS
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #ifdef _WIN32
 #include <windows.h>
@@ -13,7 +15,6 @@
 #define sleep_ms(ms) usleep((ms) * 1000)
 #endif
 
-// --- ESTRUCTURAS PRINCIPALES ---
 struct Jugador {
     char nombre[30];
     int vida;
@@ -43,7 +44,6 @@ typedef struct {
     struct NodoColaEvento* final;
 } ColaEventos;
 
-// --- PROTOTIPOS ---
 void inicializarJugador(struct Jugador* j);
 void mostrarEstado(struct Jugador j, Inventario inv);
 void agregarItemInventario(Inventario* inv, const char* item);
@@ -55,8 +55,8 @@ void encolarEvento(ColaEventos* c, const char* tipo);
 char* desencolarEvento(ColaEventos* c);
 int colaVacia(ColaEventos c);
 void liberarMemoria(Inventario* inv, PilaHistorial* pila, ColaEventos* c);
-void animacionCaminando(void);
-void animacionCombate(void);
-int leerDecision(void);
+void animacionCaminando();
+void animacionCombate();
+void procesarSiguienteEvento(struct Jugador* heroe, Inventario* inv, PilaHistorial* pila, ColaEventos* c, int* juegoTerminado);
 
-#endif#pragma once
+#endif
