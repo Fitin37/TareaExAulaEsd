@@ -67,7 +67,7 @@ int main() {
         printf("============================================\n");
     } else if (juegoTerminado) {
         printf("\n====================================================\n");
-        printf("     ¡Aura total, disfruta a la aldeana premium!\n");
+        printf("     ¡Aura total, disfruta a la aldeana premium!\n");//Cambia esto babymeshi
         printf("======================================================\n");
     }
 
