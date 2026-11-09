@@ -63,7 +63,7 @@ int main() {
 
     if (heroe.vida <= 0) {
         printf("\n==========================================\n");
-        printf("           ¡Ti muriste! Vuelve a intentarlo\n");
+        printf("           ¡Te moriste! Vuelve a intentarlo\n");
         printf("============================================\n");
     } else if (juegoTerminado) {
         printf("\n====================================================\n");
