@@ -1,19 +1,7 @@
-#define _CRT_SECURE_NO_WARNINGS
 #include "Dungeon_Adventures.h"
 
-// --- LECTURA VALIDADA: solo acepta 1 o 2 ---
-int leerDecision(void) {
-    int d = 0;
-    while (scanf("%d", &d) != 1 || (d != 1 && d != 2)) {
-        while (getchar() != '\n');
-        printf("  Opcion invalida. Elige 1 o 2: ");
-    }
-    return d;
-}
-
-// --- ANIMACIONES SIMPLES CON RETRASO ---
-void animacionCaminando(void) {
-    printf("\nAvanzando por los pasillos oscuros");
+void animacionCaminando() {
+    printf("\nMira por donde caminas pero fijate mejor con quién te rodeas");
     for (int i = 0; i < 3; i++) {
         sleep_ms(400);
         printf(".");
@@ -22,8 +10,8 @@ void animacionCaminando(void) {
     printf("\n");
 }
 
-void animacionCombate(void) {
-    printf("\nPreparando armas y escudos");
+void animacionCombate() {
+    printf("\nPoniendote macizo, preparando armas y escudos");
     for (int i = 0; i < 3; i++) {
         sleep_ms(300);
         printf(" !");
@@ -32,15 +20,123 @@ void animacionCombate(void) {
     printf("\n");
 }
 
-// --- JUGADOR ---
+void procesarSiguienteEvento(struct Jugador* heroe, Inventario* inv, PilaHistorial* pila, ColaEventos* c, int* juegoTerminado) {
+    if (colaVacia(*c)) {
+        printf("\n ¡Rusheaste el juego, ya no tienes nada que hacer aquí, eres un crack!\n");
+        *juegoTerminado = 1;
+        return;
+    }
+
+    animacionCaminando();
+
+    char* eventoActual = desencolarEvento(c);
+    if (eventoActual != NULL) {
+        printf("\n¡BUSO! te encuentras frente a: %s\n", eventoActual);
+
+        char buffer[150];
+        int decision = 0;
+
+        if (strcmp(eventoActual, "Cofre de Oro") == 0) {
+            printf("  1. Forzar la cerradura\n");
+            printf("  2. Inspeccionar la zona en busca de trampas\n");
+            printf("  Elige tu accion: ");
+            scanf("%d", &decision);
+            while (getchar() != '\n');
+
+            if (decision == 1) {
+                heroe->oro += 20;
+                sprintf(buffer, "Forzaste el cofre: +20 oro.");
+            } else {
+                heroe->oro += 35;
+                agregarItemInventario(inv, "Gema Brillante");
+                sprintf(buffer, "Inspeccionaste seguro: +35 oro y Gema.");
+            }
+            printf(" %s\n", buffer);
+            pushHistorial(pila, buffer);
+        }
+        else if (strcmp(eventoActual, "Trampa de Monstruo") == 0) {
+            animacionCombate();
+            printf("  1. Intentar huir\n");
+            printf("  2. Darte duro\n");
+            printf("  Elige tu accion: ");
+            scanf("%d", &decision);
+            while (getchar() != '\n');
+
+            if (decision == 1) {
+                heroe->vida -= 20;
+                sprintf(buffer, "Huiste cobardemente, perdiste 20 HP.");
+            } else {
+                heroe->vida -= 35;
+                sprintf(buffer, "Ahhhg!! eso dolió -35 HP.");
+            }
+            printf(" %s\n", buffer);
+            pushHistorial(pila, buffer);
+        }
+        else if (strcmp(eventoActual, "Fuente Curativa") == 0) {
+            printf("  1. Beber un trago moderado\n");
+            printf("  2. Beber sin pena\n");
+            printf("  Elige tu accion: ");
+            scanf("%d", &decision);
+            while (getchar() != '\n');
+
+            if (decision == 1) {
+                heroe->vida += 10;
+                sprintf(buffer, "Fuiste precavido y recuperastes +10 HP.");
+            } else {
+                heroe->vida += 30;
+                sprintf(buffer, "El agua es el próximo petróleo, la disfrutaste como nunca y recuperaste +30 HP.");
+            }
+
+            if (heroe->vida > 100) heroe->vida = 100;
+            printf(" %s\n", buffer);
+            pushHistorial(pila, buffer);
+        }
+        else if (strcmp(eventoActual, "Dungeon Boss") == 0) {
+            animacionCombate();
+            printf("  ¡Para esto naciste, estás cara a cara con el mero mero de este calabozo!\n");
+            printf("  1. Darte duro con el mero mero\n");
+            printf("  2. Huir como cobarde frente a la aldeana premium\n");
+            printf("  Elige tu accion: ");
+            scanf("%d", &decision);
+            while (getchar() != '\n');
+
+            if (decision == 1) {
+                heroe->vida -= 75; 
+                
+                if (heroe->vida > 0) {
+                    heroe->oro += 100;
+                    agregarItemInventario(inv, "Aldeana premium");
+                    sprintf(buffer, "¡Era más duro pasar POO que vencer a este tipo!, Farmeaste 100,000,000HP y la aldeana premium quiere estar contigo.");
+                    *juegoTerminado = 1;
+                } else {
+                    sprintf(buffer, "Te metieron una paliza histórica y enfrente de la aldeana premium, ¡La decepcionaste!");
+                }
+            } else {
+                heroe->vida -= 100; 
+                sprintf(buffer, "Intentaste huir del jefe, te alcanzó por la espalda y te humilló frente a la aldeana premium.");
+            }
+            
+            printf(" %s\n", buffer);
+            pushHistorial(pila, buffer);
+        }
+
+        free(eventoActual);
+    }
+
+    if (heroe->vida <= 0) {
+        printf("\n Bajaste a 0HP. Has muerto en el calabozo...\n");
+    }
+}
+
 void inicializarJugador(struct Jugador* j) {
     printf("\nIngrese el nombre del aventurero: ");
     if (scanf("%29s", j->nombre) != 1) {
         strcpy(j->nombre, "Heroe");
     }
+    while (getchar() != '\n');
     j->vida = 100;
     j->oro = 10;
-    printf("¡Personaje creado con exito! 100 HP iniciales.\n");
+    printf("¡Eso es bello, vamos a la aventura! 100 HP iniciales.\n");
 }
 
 void mostrarEstado(struct Jugador j, Inventario inv) {
@@ -52,7 +148,6 @@ void mostrarEstado(struct Jugador j, Inventario inv) {
     printf("-------------------------\n");
 }
 
-// --- LISTA ENLAZADA: INVENTARIO ---
 void agregarItemInventario(Inventario* inv, const char* item) {
     Inventario nuevo = (Inventario)malloc(sizeof(struct NodoInventario));
     if (nuevo != NULL) {
@@ -63,19 +158,18 @@ void agregarItemInventario(Inventario* inv, const char* item) {
 }
 
 void mostrarInventario(Inventario inv) {
-    printf(" Inventario (Lista Enlazada):\n");
+    printf("Este es tu loot:\n");
     Inventario actual = inv;
     if (actual == NULL) {
-        printf("   (Mochila vacia)\n");
+        printf(" Farméa más cosas héroe, está más vacío que ese exámen de cálculo... \n");
         return;
     }
     while (actual != NULL) {
-        printf("   - %s\n", actual->nombreItem);
+        printf("    - %s\n", actual->nombreItem);
         actual = actual->siguiente;
     }
 }
 
-// --- PILA: HISTORIAL ---
 void pushHistorial(PilaHistorial* pila, const char* texto) {
     PilaHistorial nuevo = (PilaHistorial)malloc(sizeof(struct NodoHistorial));
     if (nuevo != NULL) {
@@ -89,7 +183,7 @@ void mostrarHistorial(PilaHistorial pila) {
     printf("\n--- HISTORIAL RECIENTE ---\n");
     PilaHistorial actual = pila;
     if (actual == NULL) {
-        printf("El historial esta vacio.\n");
+        printf("El historial esta vacio, necesitamos que te atrevas a aventurear.\n");
         return;
     }
     while (actual != NULL) {
@@ -99,7 +193,6 @@ void mostrarHistorial(PilaHistorial pila) {
     printf("--------------------------------------\n");
 }
 
-// --- COLA: EVENTOS ---
 void inicializarCola(ColaEventos* c) {
     c->frente = NULL;
     c->final = NULL;
@@ -116,8 +209,7 @@ void encolarEvento(ColaEventos* c, const char* tipo) {
         nuevo->siguiente = NULL;
         if (c->final == NULL) {
             c->frente = nuevo;
-        }
-        else {
+        } else {
             c->final->siguiente = nuevo;
         }
         c->final = nuevo;
@@ -139,7 +231,6 @@ char* desencolarEvento(ColaEventos* c) {
     return tipo;
 }
 
-// --- LIBERACIÓN DE MEMORIA ---
 void liberarMemoria(Inventario* inv, PilaHistorial* pila, ColaEventos* c) {
     if (inv != NULL) {
         while (*inv != NULL) {
